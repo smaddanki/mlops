@@ -1,0 +1,30 @@
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: k3d-cluster
+servers: 1
+agents: 2
+image: rancher/k3s:latest
+ports:
+  - port: 80:80
+    nodeFilters:
+      - loadbalancer
+  - port: 443:443
+    nodeFilters:
+      - loadbalancer
+  - port: 5432:5432
+    nodeFilters:
+      - loadbalancer
+options:
+  k3s:
+    extraArgs:
+      - arg: "--disable=traefik"
+        nodeFilters:
+          - server:*
+registries:
+  create: 
+    name: registry.localhost
+kubeAPI:
+  host: "0.0.0.0"
+  hostIP: "127.0.0.1"
+  hostPort: "6443"

@@ -1,0 +1,19 @@
+global:
+  postgresql:
+    auth:
+      enablePostgresUser: true
+      username: "pguser"
+      password: "pgpassword"
+      database: "pgdatabase"
+      postgresPassword: "postgresadmin"
+
+primary:
+  service:
+    type: ClusterIP
+    ports:
+      postgresql: 5432
+  persistence:
+    enabled: false
+
+pgHbaConfiguration: |
+  host all all 0.0.0.0/0 md5

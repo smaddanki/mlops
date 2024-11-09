@@ -1,0 +1,32 @@
+# postgres-storage.yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: local-storage
+provisioner: kubernetes.io/no-provisioner
+volumeBindingMode: WaitForFirstConsumer
+reclaimPolicy: Retain
+
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-pv
+spec:
+  capacity:
+    storage: 10Gi
+  volumeMode: Filesystem
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: local-storage
+  local:
+    path: /tmp/postgres-data  # Changed to a more accessible path
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: kubernetes.io/hostname
+              operator: In
+              values:
+                - k3d-k3d-cluster-server-0  # Using server node instead of agent
