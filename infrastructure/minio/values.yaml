@@ -1,0 +1,41 @@
+mode: standalone
+
+rootUser: "minioadmin"
+rootPassword: "minioadmin"
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+resources:
+  requests:
+    memory: 512Mi
+
+service:
+  type: ClusterIP
+  
+ingress:
+  enabled: false  # We'll use Traefik IngressRoute
+
+consoleIngress:
+  enabled: false  # We'll use Traefik IngressRoute
+
+api:
+  notifications:
+    webhook:
+      enable: true
+
+buckets:
+  - name: airflow
+    policy: none
+    purge: false
+  - name: data
+    policy: none
+    purge: false
+
+# CORS Settings
+apiExtraEnvVars:
+  - name: MINIO_BROWSER_REDIRECT_URL
+    value: "http://minio.localhost"
+  - name: MINIO_CORS_ALLOW_ORIGINS
+    value: "*"
