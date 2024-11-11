@@ -1,0 +1,24 @@
+# Cluster Parameters
+cluster:
+  cluster-name: k3d-cluster
+  server: 1
+  agents: 2
+
+postgresdb:
+  namespace: postgres
+  helm-release-name: postgres
+  database-name:
+    - pgdatabase
+    - airflow
+  db-user:
+    - root
+    - pguser
+    - airflow-user
+
+  pv-setting: []
+  pvc-setting: []
+
+airflow: {}
+redis: []
+
+

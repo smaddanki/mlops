@@ -28,6 +28,13 @@ ports:
     exposedPort: 5432
     protocol: TCP
 
+  minio:
+    port: 9000
+    expose: 
+      default: true
+    exposedPort: 9000
+    protocol: TCP
+
 api:
   dashboard: true
   insecure: true
@@ -45,5 +52,6 @@ additionalArguments:
   - "--entrypoints.web.address=:80"
   - "--entrypoints.websecure.address=:443"
   - "--entrypoints.postgres.address=:5432/tcp"
+  - "--entrypoints.minio.address=:9000/tcp"
   - "--providers.kubernetesingress.allowexternalnameservices=true"
   - "--log.level=DEBUG"

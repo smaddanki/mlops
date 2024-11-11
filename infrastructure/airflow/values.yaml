@@ -1,0 +1,37 @@
+# Airflow Helm values
+
+# Provide a name to substitute for the full names of resources
+fullnameOverride: "sma-airflow"
+
+
+postgresql:
+  enabled: false  # Disable built-in PostgreSQL
+
+data:
+  metadataConnection:
+    user: pguser
+    pass: pgpassword
+    host: postgres-postgresql.postgres.svc.cluster.local
+    port: 5432
+    db: airflow  # We'll create this database
+
+pgbouncer:
+  enabled: true
+
+webserver:
+  defaultUser:
+    enabled: true
+    username: admin
+    password: admin
+    email: admin@example.com
+    firstName: admin
+    lastName: user
+    role: Admin
+  
+  service:
+    type: ClusterIP
+
+
+dags:
+  persistence:
+    enabled: false  # For development, we'll use git-sync later
