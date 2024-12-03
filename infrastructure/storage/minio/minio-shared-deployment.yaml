@@ -1,4 +1,31 @@
-# storage/minio-deployment.yaml
+# minio-storage.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-data-pv
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  hostPath:
+    path: /mnt/minio/data
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-data-pvc
+  namespace: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 20Gi
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -28,16 +55,21 @@ spec:
           value: "minioadmin"
         - name: MINIO_ROOT_PASSWORD
           value: "minioadmin"
-        ports:
-        - containerPort: 9000
-        - containerPort: 9001
+        - name: MINIO_STORAGE_CLASS_STANDARD
+          value: "EC:0"  # Disable erasure coding for direct file access
+        - name: MINIO_COMPRESS
+          value: "off"   # Disable compression
+        - name: MINIO_COMPRESS_EXTENSIONS
+          value: ""
+        - name: MINIO_COMPRESS_MIME_TYPES
+          value: ""
         volumeMounts:
         - name: storage
           mountPath: "/data"
       volumes:
       - name: storage
         persistentVolumeClaim:
-          claimName: minio-pvc
+          claimName: minio-data-pvc
 ---
 apiVersion: v1
 kind: Service
@@ -57,3 +89,4 @@ spec:
   selector:
     app: minio
   type: NodePort
+

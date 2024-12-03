@@ -1,0 +1,70 @@
+# clickhouse-instance.yaml
+apiVersion: "clickhouse.altinity.com/v1"
+kind: "ClickHouseInstallation"
+metadata:
+  name: clickhouse
+  namespace: database
+spec:
+  configuration:
+    clusters:
+      - name: cluster
+        layout:
+          shardsCount: 2  # Increased to support scaling
+          replicasCount: 2  # Added replicas for HA
+    users:
+      default/password: clickhouse
+      default/networks/ip: "::/0"
+      admin/password: admin_password
+      admin/networks/ip: "::/0"
+      admin/profile: default
+      admin/quota: default
+      admin/access_management: 1
+    profiles:
+      default/max_memory_usage: 10000000000
+    settings:
+      format_schema_path: /var/lib/clickhouse/format_schemas/
+  templates:
+    volumeClaimTemplates:
+      - name: data-volume
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+          storageClassName: local-path
+          hostPath:
+            path: /mnt/clickhouse
+      - name: logs-volume
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 2Gi
+          storageClassName: local-path
+          hostPath:
+            path: /mnt/clickhouse/logs          
+    podTemplates:
+      - name: clickhouse-template
+        spec:
+          containers:
+            - name: clickhouse
+              image: clickhouse/clickhouse-server:23.8
+              resources:
+                requests:
+                  memory: 1Gi
+                  cpu: "0.5"
+                limits:
+                  memory: 2Gi
+                  cpu: "1"
+              volumeMounts:
+                - name: data-volume
+                  mountPath: /var/lib/clickhouse
+                - name: logs-volume
+                  mountPath: /var/log/clickhouse-server
+  defaults:
+    templates:
+      podTemplate: clickhouse-template
+      volumeClaimTemplate: data-volume
+      logVolumeClaimTemplate: logs-volume

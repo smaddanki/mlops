@@ -24,8 +24,20 @@ ports:
   - port: 30901:30901
     nodeFilters:
       - loadbalancer
+  # ClickHouse ports
+  - port: 30910:30910
+    nodeFilters:
+      - loadbalancer
+  - port: 30123:30123
+    nodeFilters:
+      - loadbalancer
 volumes:
+  # MinIO volume
   - volume: ${HOME}/k3d/data/minio:/mnt/minio
+    nodeFilters:
+      - all
+  # ClickHouse volume
+  - volume: ${HOME}/k3d/data/clickhouse:/mnt/clickhouse
     nodeFilters:
       - all
 options:
