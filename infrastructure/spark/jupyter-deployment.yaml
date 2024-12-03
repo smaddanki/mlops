@@ -1,0 +1,60 @@
+# spark/jupyter-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jupyter
+  namespace: spark
+spec:
+  selector:
+    matchLabels:
+      app: jupyter
+  template:
+    metadata:
+      labels:
+        app: jupyter
+    spec:
+      containers:
+      - name: jupyter
+        image: jupyter/pyspark-notebook:spark-3.5
+        ports:
+        - containerPort: 8888
+        env:
+        - name: JUPYTER_ENABLE_LAB
+          value: "yes"
+        volumeMounts:
+        - name: jupyter-data
+          mountPath: /home/jovyan/work
+        - name: jupyter-config
+          mountPath: /home/jovyan/.jupyter
+      volumes:
+      - name: jupyter-data
+        persistentVolumeClaim:
+          claimName: jupyter-pvc
+      - name: jupyter-config
+        configMap:
+          name: jupyter-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jupyter
+  namespace: spark
+spec:
+  ports:
+  - port: 8888
+    targetPort: 8888
+  selector:
+    app: jupyter
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jupyter-config
+  namespace: spark
+data:
+  jupyter_notebook_config.py: |
+    c.NotebookApp.ip = '0.0.0.0'
+    c.NotebookApp.allow_root = True
+    c.NotebookApp.open_browser = False
+    c.NotebookApp.token = 'your-secret-token'  

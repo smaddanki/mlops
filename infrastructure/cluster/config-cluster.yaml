@@ -1,0 +1,50 @@
+# config-cluster.yaml
+apiVersion: k3d.io/v1alpha5
+kind: Simple
+metadata:
+  name: k3d-cluster
+servers: 1
+agents: 2
+kubeAPI:
+  host: "0.0.0.0"
+  hostIP: "127.0.0.1"
+  hostPort: "6443"
+registries:
+  create:
+    name: registry.localhost
+    host: "0.0.0.0"
+    hostPort: "5050"  # Changed from 5000 to 5050
+network: k3d-network
+volumes:
+  - volume: ${HOME}/k3d/pv:/var/lib/rancher/k3s/storage
+    nodeFilters:
+      - all
+  - volume: ${HOME}/k3d/prometheus:/prometheus
+    nodeFilters:
+      - all
+  - volume: ${HOME}/k3d/grafana:/grafana
+    nodeFilters:
+      - all
+ports:
+  - port: 9080:80
+    nodeFilters:
+      - loadbalancer
+  - port: 9443:443
+    nodeFilters:
+      - loadbalancer
+  - port: 30000:3000
+    nodeFilters:
+      - loadbalancer
+  - port: 30090:9090
+    nodeFilters:
+      - loadbalancer
+options:
+  k3d:
+    wait: true
+    disableLoadbalancer: false
+    disableImageVolume: false
+  k3s:
+    extraArgs:
+      - arg: --disable=traefik
+        nodeFilters:
+          - server:*

@@ -1,0 +1,39 @@
+# clickhouse-hpa.yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: clickhouse-hpa
+  namespace: database
+spec:
+  scaleTargetRef:
+    apiVersion: clickhouse.altinity.com/v1
+    kind: ClickHouseInstallation
+    name: clickhouse
+  minReplicas: 2
+  maxReplicas: 5
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 180
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Pods
+        value: 1
+        periodSeconds: 180

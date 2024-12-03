@@ -1,0 +1,88 @@
+
+# storage/persistent-volumes.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: minio-pv
+spec:
+  capacity:
+    storage: 20Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  hostPath:
+    path: /mnt/minio  # Replace with your actual home directory path
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: minio-pvc
+  namespace: storage
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 20Gi
+---
+# storage/minio-deployment.yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: minio
+  namespace: storage
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: minio
+    spec:
+      containers:
+      - name: minio
+        image: minio/minio:RELEASE.2024-01-18T22-51-28Z
+        args:
+        - server
+        - /data
+        - --console-address
+        - ":9001"
+        env:
+        - name: MINIO_ROOT_USER
+          value: "minioadmin"
+        - name: MINIO_ROOT_PASSWORD
+          value: "minioadmin"
+        ports:
+        - containerPort: 9000
+        - containerPort: 9001
+        volumeMounts:
+        - name: storage
+          mountPath: "/data"
+      volumes:
+      - name: storage
+        persistentVolumeClaim:
+          claimName: minio-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: storage
+spec:
+  ports:
+  - port: 9000
+    targetPort: 9000
+    nodePort: 30900
+    name: api
+  - port: 9001
+    targetPort: 9001
+    nodePort: 30901
+    name: console
+  selector:
+    app: minio
+  type: NodePort

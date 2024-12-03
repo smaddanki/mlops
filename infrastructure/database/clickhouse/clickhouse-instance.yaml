@@ -1,0 +1,92 @@
+# clickhouse-storage.yaml
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: clickhouse-data-pv
+spec:
+  capacity:
+    storage: 10Gi
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  hostPath:
+    path: /mnt/clickhouse/data
+  persistentVolumeReclaimPolicy: Retain
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: clickhouse-data-pvc
+  namespace: database
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 10Gi
+  storageClassName: local-path
+---
+# clickhouse-instance.yaml
+apiVersion: "clickhouse.altinity.com/v1"
+kind: "ClickHouseInstallation"
+metadata:
+  name: clickhouse
+  namespace: database
+spec:
+  configuration:
+    clusters:
+      - name: cluster
+        layout:
+          shardsCount: 1
+          replicasCount: 1
+    users:
+      default/password: clickhouse
+      default/networks/ip: "::/0"
+      admin/password: admin_password
+      admin/networks/ip: "::/0"
+      admin/profile: default
+      admin/quota: default
+      admin/access_management: 1
+    profiles:
+      default/max_memory_usage: 10000000000
+    settings:
+      format_schema_path: /var/lib/clickhouse/format_schemas/
+  defaults:
+    templates:
+      podTemplate: clickhouse-pod-template
+      dataVolumeClaimTemplate: data-volume-template
+  templates:
+    podTemplates:
+      - name: clickhouse-pod-template
+        spec:
+          securityContext:
+            fsGroup: 101
+            runAsGroup: 101
+            runAsUser: 101
+          containers:
+            - name: clickhouse
+              image: clickhouse/clickhouse-server:23.8
+              ports:
+                - name: http
+                  containerPort: 8123
+                - name: native
+                  containerPort: 9000
+              volumeMounts:
+                - name: data-volume
+                  mountPath: /var/lib/clickhouse
+              resources:
+                requests:
+                  memory: 1Gi
+                  cpu: "0.5"
+                limits:
+                  memory: 2Gi
+                  cpu: "1"
+    volumeClaimTemplates:
+      - name: data-volume-template
+        spec:
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 10Gi
+          storageClassName: local-path

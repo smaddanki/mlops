@@ -25,16 +25,27 @@ kubectl apply -f infrastructure/storage/minio/minio-shared-deployment.yaml
 echo "Waiting for Minio to be ready..."
 # kubectl wait --for=condition=ready pod -l app.kubernetes.io/name=minio -n storage --timeout=90s
 
-echo "Creating Clickhouse Dashboard..."
+echo "Installing Zookeeper..."
+
+kubectl apply -f infrastructure/database/clickhouse-hpa/zookeeper.yaml
+
+# Wait for ZooKeeper to be ready
+kubectl wait --for=condition=ready pod -l app=zookeeper -n database
+
+echo "Creating Clickhouse Operator..."
 kubectl apply -f https://raw.githubusercontent.com/Altinity/clickhouse-operator/master/deploy/operator/clickhouse-operator-install-bundle.yaml
-kubectl apply -f infrastructure/database/clickhouse/clickhouse-instance.yaml 
-kubectl apply -f infrastructure/database/clickhouse/clickhouse-service.yaml 
+echo "Creating Clickhouse Instance and Persistance Volume claims..."
+kubectl apply -f infrastructure/database/clickhouse-hpa/clickhouse-instance.yaml 
+echo "Creating Clickhouse HPA..."
+kubectl apply -f infrastructure/database/clickhouse-hpa/clickhouse-hpa.yaml 
+echo "Creating Clickhouse Service..."
+kubectl apply -f infrastructure/database/clickhouse-hpa/clickhouse-service.yaml 
 
 echo "Installation complete!"
-echo "Traefik Dashboard: http://traefik.localhost"
-echo "PostgreSQL: localhost:5432"
-echo "PostgreSQL Credentials:"
-echo "  Username: pguser"
-echo "  Password: pgpass123"
-echo "  Database: pgdatabase"
+# echo "Traefik Dashboard: http://traefik.localhost"
+# echo "PostgreSQL: localhost:5432"
+# echo "PostgreSQL Credentials:"
+# echo "  Username: pguser"
+# echo "  Password: pgpass123"
+# echo "  Database: pgdatabase"
 
