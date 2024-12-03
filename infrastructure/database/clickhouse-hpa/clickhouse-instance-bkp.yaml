@@ -1,8 +1,8 @@
-# clickhouse-storage.yaml
+# clickhouse-full.yaml
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: clickhouse-data-pv
+  name: clickhouse-data-pv-0
 spec:
   capacity:
     storage: 10Gi
@@ -10,21 +10,22 @@ spec:
     - ReadWriteOnce
   storageClassName: local-path
   hostPath:
-    path: /mnt/clickhouse/data
+    path: /mnt/clickhouse/data-0
   persistentVolumeReclaimPolicy: Retain
 ---
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: PersistentVolume
 metadata:
-  name: clickhouse-data-pvc
-  namespace: database
+  name: clickhouse-data-pv-1
 spec:
+  capacity:
+    storage: 10Gi
   accessModes:
     - ReadWriteOnce
-  resources:
-    requests:
-      storage: 10Gi
   storageClassName: local-path
+  hostPath:
+    path: /mnt/clickhouse/data-1
+  persistentVolumeReclaimPolicy: Retain
 ---
 # clickhouse-instance.yaml
 apiVersion: "clickhouse.altinity.com/v1"
@@ -37,8 +38,14 @@ spec:
     clusters:
       - name: cluster
         layout:
-          shardsCount: 1
+          shardsCount: 2
           replicasCount: 1
+        settings:
+            cluster_discovery_method: disk
+    zookeeper:
+      nodes:
+        - host: zookeeper
+          port: 2181
     users:
       default/password: clickhouse
       default/networks/ip: "::/0"
@@ -72,7 +79,7 @@ spec:
                 - name: native
                   containerPort: 9000
               volumeMounts:
-                - name: data-volume
+                - name: data-volume-template
                   mountPath: /var/lib/clickhouse
               resources:
                 requests:
