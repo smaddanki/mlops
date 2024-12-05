@@ -1,4 +1,3 @@
-# config-cluster.yaml
 apiVersion: k3d.io/v1alpha5
 kind: Simple
 metadata:
@@ -31,6 +30,13 @@ ports:
   - port: 30123:30123
     nodeFilters:
       - loadbalancer
+  # Kafka ports
+  - port: 9092:9092    # Kafka broker
+    nodeFilters:
+      - loadbalancer
+  - port: 30092:30092  # Kafka broker
+    nodeFilters:
+      - loadbalancer
 volumes:
   # MinIO volume
   - volume: ${HOME}/k3d/data/minio:/mnt/minio
@@ -38,6 +44,13 @@ volumes:
       - all
   # ClickHouse volume
   - volume: ${HOME}/k3d/data/clickhouse:/mnt/clickhouse
+    nodeFilters:
+      - all
+  # Kafka and ZooKeeper volumes
+  - volume: ${HOME}/k3d/data/kafka:/mnt/kafka
+    nodeFilters:
+      - all
+  - volume: ${HOME}/k3d/data/zookeeper:/mnt/zookeeper
     nodeFilters:
       - all
 options:
@@ -50,3 +63,6 @@ options:
       - arg: --disable=traefik
         nodeFilters:
           - server:*
+  runtime:
+    serversMemory: "8G"
+    agentsMemory: "8G"

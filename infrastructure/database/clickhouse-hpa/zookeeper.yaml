@@ -1,4 +1,3 @@
-# zookeeper.yaml
 apiVersion: v1
 kind: Service
 metadata:
@@ -8,6 +7,10 @@ spec:
   ports:
     - port: 2181
       name: client
+    - port: 2888
+      name: server
+    - port: 3888
+      name: leader
   selector:
     app: zookeeper
 ---
@@ -33,20 +36,28 @@ spec:
           ports:
             - containerPort: 2181
               name: client
+            - containerPort: 2888
+              name: server
+            - containerPort: 3888
+              name: leader
           env:
             - name: ZOO_MY_ID
               value: "1"
             - name: ZOO_SERVERS
               value: "server.1=0.0.0.0:2888:3888;2181"
+            - name: ZOO_4LW_COMMANDS_WHITELIST
+              value: "*"
           volumeMounts:
-            - name: data
+            - name: zookeeper-data
               mountPath: /data
-  volumeClaimTemplates:
-    - metadata:
-        name: data
-      spec:
-        accessModes: [ "ReadWriteOnce" ]
-        resources:
-          requests:
-            storage: 1Gi
-        storageClassName: local-path
+            - name: zookeeper-datalog
+              mountPath: /datalog
+      volumes:
+        - name: zookeeper-data
+          hostPath:
+            path: /mnt/zookeeper/data
+            type: DirectoryOrCreate
+        - name: zookeeper-datalog
+          hostPath:
+            path: /mnt/zookeeper/datalog
+            type: DirectoryOrCreate

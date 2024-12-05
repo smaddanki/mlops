@@ -1,8 +1,15 @@
 #!/bin/bash
 set -e
 echo $(pwd)
+
+# Create directories
+mkdir -p ~/k3d/data/zookeeper/data
+mkdir -p ~/k3d/data/zookeeper/datalog
+mkdir -p ~/k3d/data/kafka
+
+
 echo "Creating k3d cluster..."
-k3d cluster create --config infrastructure/cluster/k3d-cluster-config.yaml
+k3d cluster create --config infrastructure/cluster/k3d-cluster-config.yaml --agents-memory 8G
 
 echo "Waiting for cluster to be ready..."
 kubectl wait --for=condition=Ready nodes --all --timeout=120s
@@ -11,6 +18,7 @@ kubectl wait --for=condition=Ready -n kube-system pods --all --timeout=120s
 echo "Cluster Installation done..."
 
 # Reapply configurations
+
 kubectl create namespace storage
 echo "created namespace Storage..."
 kubectl create namespace database
@@ -28,6 +36,7 @@ echo "Waiting for Minio to be ready..."
 echo "Installing Zookeeper..."
 
 kubectl apply -f infrastructure/database/clickhouse-hpa/zookeeper.yaml
+kubectl wait --for=condition=ready pod/zookeeper-0 -n database --timeout=120s
 
 # Wait for ZooKeeper to be ready
 kubectl wait --for=condition=ready pod -l app=zookeeper -n database
@@ -41,11 +50,19 @@ kubectl apply -f infrastructure/database/clickhouse-hpa/clickhouse-hpa.yaml
 echo "Creating Clickhouse Service..."
 kubectl apply -f infrastructure/database/clickhouse-hpa/clickhouse-service.yaml 
 
-echo "Installation complete!"
-# echo "Traefik Dashboard: http://traefik.localhost"
-# echo "PostgreSQL: localhost:5432"
-# echo "PostgreSQL Credentials:"
-# echo "  Username: pguser"
-# echo "  Password: pgpass123"
-# echo "  Database: pgdatabase"
+echo "Installing Kafka..."
+
+kubectl apply -f infrastructure/database/clickhouse-hpa/kafka.yaml
+
+# echo "Add monitoring to the cluster!"
+# kubectl create namespace monitoring
+# echo "created namespace monitoring..."
+# helm repo update
+# # Install kube-prometheus-stack
+# helm install monitoring prometheus-community/kube-prometheus-stack \
+#   --namespace monitoring \
+#   --set prometheus.service.type=NodePort \
+#   --set prometheus.service.nodePort=30090 \
+#   --set grafana.service.type=NodePort \
+#   --set grafana.service.nodePort=30091
 

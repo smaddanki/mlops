@@ -6,9 +6,9 @@ metadata:
   namespace: database
 spec:
   scaleTargetRef:
-    apiVersion: clickhouse.altinity.com/v1
-    kind: ClickHouseInstallation
-    name: clickhouse
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: chi-clickhouse-cluster-0-0
   minReplicas: 2
   maxReplicas: 5
   metrics:

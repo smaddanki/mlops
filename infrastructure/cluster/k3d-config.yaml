@@ -4,7 +4,10 @@ metadata:
   name: k3d-cluster
 servers: 1
 agents: 2
-image: rancher/k3s:latest
+kubeAPI:
+  host: "0.0.0.0"
+  hostIP: "127.0.0.1"
+  hostPort: "6443"
 ports:
   - port: 80:80
     nodeFilters:
@@ -12,19 +15,44 @@ ports:
   - port: 443:443
     nodeFilters:
       - loadbalancer
-  # - port: 5432:5432
-  #   nodeFilters:
-  #     - loadbalancer
+  # Other ports...
 options:
+  k3d:
+    wait: true
+    disableLoadbalancer: false
+    disableImageVolume: false
   k3s:
     extraArgs:
-      - arg: "--disable=traefik"
+      - arg: --disable=traefik=false  # Enable Traefik
         nodeFilters:
           - server:*
-registries:
-  create: 
-    name: registry.localhost
-kubeAPI:
-  host: "0.0.0.0"
-  hostIP: "127.0.0.1"
-  hostPort: "6443"
+
+---
+apiVersion: traefik.containo.us/v1alpha1
+kind: IngressRouteTCP
+metadata:
+  name: kafka-route
+  namespace: database
+spec:
+  entryPoints:
+    - kafka
+  routes:
+    - match: HostSNI(`*`)
+      services:
+        - name: kafka-service
+          port: 9092
+
+---
+apiVersion: helm.cattle.io/v1
+kind: HelmChartConfig
+metadata:
+  name: traefik
+  namespace: traefik
+spec:
+  valuesContent: |-
+    ports:
+      kafka:
+        port: 9092
+        expose: true
+        exposedPort: 9092
+        protocol: TCP

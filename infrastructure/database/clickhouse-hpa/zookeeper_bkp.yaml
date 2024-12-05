@@ -1,0 +1,12 @@
+# zookeeper.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: zookeeper
+  namespace: database
+spec:
+  ports:
+    - port: 2181
+      name: client
+  selector:
+    app: zookeeper

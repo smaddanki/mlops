@@ -1,37 +1,11 @@
-# monitoring-values.yaml
-grafana:
-  persistence:
-    enabled: true
-    storageClassName: local-path
-    size: 10Gi
-    accessModes:
-      - ReadWriteOnce
-  service:
-    type: LoadBalancer
-    port: 3000
-
 prometheus:
   prometheusSpec:
-    podMonitorSelectorNilUsesHelmValues: false
-    serviceMonitorSelectorNilUsesHelmValues: false
-    storageSpec:
-      volumeClaimTemplate:
-        spec:
-          storageClassName: local-path
-          accessModes: ["ReadWriteOnce"]
-          resources:
-            requests:
-              storage: 10Gi
-
-alertmanager:
-  enabled: true
-  persistence:
-    enabled: true
-    storageClassName: local-path
-    size: 5Gi
-
-nodeExporter:
-  enabled: true
-
-kubeStateMetrics:
-  enabled: true
+    additionalScrapeConfigs:
+      - job_name: minio
+        static_configs:
+          - targets: 
+            - "minio:30901"
+      - job_name: clickhouse
+        static_configs:
+          - targets:
+            - "clickhouse:30123"

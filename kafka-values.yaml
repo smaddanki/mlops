@@ -1,0 +1,65 @@
+nameOverride: "kafka"
+fullnameOverride: "kafka"
+
+# Broker configuration
+broker:
+  replicaCount: 1
+  heapOpts: "-Xmx1024m -Xms1024m"
+  servicePort: 30092
+  service:
+    type: NodePort
+    nodePorts:
+      client: 30092
+    ports:
+      client: 30092
+
+# Disable controller (for ZooKeeper mode)
+controller:
+  replicaCount: 0
+
+# Mode configuration
+kraft:
+  enabled: false
+
+# Listener configuration
+listeners:
+  client:
+    protocol: PLAINTEXT
+    name: PLAINTEXT
+    containerPort: 9092
+    servicePort: 30092
+
+# Service configuration
+service:
+  type: NodePort
+  ports:
+    client: 30092
+  nodePorts:
+    client: 30092
+
+# Persistence configuration
+persistence:
+  enabled: true
+  storageClass: "local-path"
+  size: 8Gi
+  mountPath: "/bitnami/kafka"
+
+# ZooKeeper configuration
+zookeeper:
+  enabled: true
+  replicaCount: 1
+  persistence:
+    enabled: true
+    storageClass: "local-path"
+    size: 8Gi
+
+# Authentication
+auth:
+  clientProtocol: plaintext
+  interBrokerProtocol: plaintext
+  tls:
+    enabled: false
+
+# Network policies
+networkPolicy:
+  enabled: false
